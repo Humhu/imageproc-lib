@@ -29,16 +29,18 @@
  *
  * System Time Module
  *
- * by Humphrey Hu
- * based on "stopwatch.c" by Stanley S. Baek
+ * by Stanley S. Baek and Humphrey Hu
+ *
+ * v.0.1
+ *
+ * Revisions:
+ *  Stanley S. Baek     2010-06-16      Initial release
+ *  Humphrey Hu         2012-02-20      Restructuring module as sclock.
  *
  * Notes:
- *  - MCU resources requied for this module:
- *      Timer8 & Timer9 are used for a 32-bit timer. 
- *
- * Usage:
+ *  - This module requires Timer 8 and 9 for setting up a 32-bit timer.
  */
- 
+
 #include "timer.h"
 #include "sclock.h"
 
@@ -52,36 +54,24 @@ typedef union {
     struct {
         unsigned int lsw;
         unsigned int msw;
-    } half;    
+    } half;
 } Time;
 
-/*-----------------------------------------------------------------------------
- *          Static Variables
------------------------------------------------------------------------------*/
+// =========== Private Variables ==============================================
 
 static Time sclock_offset;
 
-/*-----------------------------------------------------------------------------
- *          Declaration of static functions
------------------------------------------------------------------------------*/
+// =========== Private Function Prototypes ====================================
 
 static void sclockSetupPeripheral(void);
+static void sclockReset(void);
 
 // =========== Public Functions ===============================================
+
 void sclockSetup(void) {
 
     sclockSetupPeripheral();
     sclockReset();
-
-}
-
-// TODO: Make private
-void sclockReset(void) {
-
-    // do not change the order of the following two lines.
-    TMR_MSW = 0;
-    TMR_LSW = 0;
-    sclock_offset.time = 0;
 
 }
 
@@ -116,7 +106,7 @@ unsigned long sclockGetLocalMillis(void) {
 }
 
 unsigned long sclockGetOffsetTicks(void) {
-    
+
     return sclock_offset.time;
 
 }
@@ -139,6 +129,13 @@ void sclockSetOffsetMillis(unsigned long offset) {
 
 }
 
+unsigned int sclockGetMillisFactor(void) {
+
+    return MILLIS_FACTOR;
+
+}
+
+
 // =========== Private Functions ==============================================
 
 /**
@@ -147,18 +144,23 @@ void sclockSetOffsetMillis(unsigned long offset) {
 static void sclockSetupPeripheral(void) {
 
     unsigned int T8CONvalue, T8PERvalue;
-    T8CONvalue =    T8_OFF &         
+    T8CONvalue =    T8_OFF &
                     T8_IDLE_CON &
                     T8_GATE_OFF &
                     T8_PS_1_64 &
                     T8_32BIT_MODE_ON &
                     T8_SOURCE_INT;
     T8PERvalue = 40;    // this value doesn't really mean anything here.
-    OpenTimer8(T8CONvalue, T8PERvalue);	
+    OpenTimer8(T8CONvalue, T8PERvalue);
     T8CONbits.TON = 1;
-    
+
 }
 
+static void sclockReset(void) {
 
+    // do not change the order of the following two lines.
+    TMR_MSW = 0;
+    TMR_LSW = 0;
+    sclock_offset.time = 0;
 
-
+}

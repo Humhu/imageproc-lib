@@ -29,39 +29,83 @@
  *
  * System Time Module
  *
- * by Humphrey Hu
- * based on "stopwatch.c" by Stanley S. Baek
+ * by Stanley S. Baek and Humphrey Hu
  *
- * v.beta
- *
- * Revisions:
- *  Stanley S. Baek     2010-06-16      Initial release of "stopwatch.c"
- *  Humphrey Hu         2012-02-20      Initial release
- *  Humphrey Hu         2012-04-26      Renamed file to "sclock"
- * Notes:
- *  - MCU resources requied for this module:
- *      Timer8 & Timer9 are used for a 32-bit timer. 
- *  - Timer is set to 625 ticks per millisecond
+ * v.0.1
  *
  * Usage:
+ *   #include "sclock.h"
+ *   #include "utils.h"
+ *
+ *   unsigned long time_elapsed;
+ *
+ *   // initialize system time module
+ *   sclockSetup();
+ *
+ *   // delay for 2 sec
+ *   delay_ms(2000);
+ *
+ *   time_elapsed = sclockGetGlobalMillis();
+ *   // time_elapsed should hold a value of ~2,000.
  */
 
-#ifndef __SYS_CLOCK_H
-#define __SYS_CLOCK_H
+#ifndef __SCLOCK_H
+#define __SCLOCK_H
 
+
+// Handles initialization of required timers and resets time to 0.
 void sclockSetup(void);
-void sclockReset(void);
 
+// Requests number of ticks since the clock was started, added to a
+// specified offset, if any.
+//
+// 625 ticks add up to a millisecond elapsed.
+//
+// Returns : global ticks
 unsigned long sclockGetGlobalTicks(void);
+
+// Requests number of milliseconds since the clock was started, added to a
+// specified offset, if any.
+//
+// Returns : global milliseconds
 unsigned long sclockGetGlobalMillis(void);
 
+// Requests number of ticks since the clock was started.
+//
+// 625 ticks add up to a millisecond elapsed.
+//
+// Returns : local ticks
 unsigned long sclockGetLocalTicks(void);
+
+// Requests number of milliseconds since the clock was started.
+//
+// Returns : local milliseconds
 unsigned long sclockGetLocalMillis(void);
 
+// Requests the clock offset in ticks.
+//
+// Returns : offset ticks
 unsigned long sclockGetOffsetTicks(void);
+
+// Requests the clock offset in milliseconds.
+//
+// Returns : offset milliseconds
 unsigned long sclockGetOffsetMillis(void);
 
-void sclockSetOffsetTicks(unsigned long offset); 
+// Sets the clock offset in ticks.
+//
+// Parameters : offset ticks
+void sclockSetOffsetTicks(unsigned long offset);
+
+// Sets the clock offset in milliseconds.
+//
+// Parameters : offset milliseconds
 void sclockSetOffsetMillis(unsigned long offset);
 
-#endif //  __STOPWATCH_H
+// Requests how many ticks comprise a millisecond
+//
+// Returns: millisecond-to-ticks factor
+unsigned int sclockGetMillisFactor(void);
+
+
+#endif //  __SCLOCK_H
