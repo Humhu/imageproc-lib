@@ -30,7 +30,7 @@
  * Orientation Estimation Module (Quaternion and Binary Angle Representation)
  *
  *  by Humphrey Hu
- *  v.beta
+ *  v.0.4
  *
  *
  * Revision History:
@@ -85,22 +85,15 @@ static void calculateEulerAngles(void);
 
 // =========== Public Functions ===============================================
 
-void attSetup(float ts) {
+void attSetup(float ts) {    
 
-    is_ready = 0;
-    is_running = 0;
-
-    sample_period = ts;
-    is_ready = 1;
-
-    //measureXLScale(SCALE_CALIB_SAMPLES);
+    sample_period = ts;        
     xlReadXYZ();
     attZero();
     attReset();
-
-    //swatchReset();
-    //swatchTic();
-
+    
+    is_running = 0;
+    is_ready = 1;
 }
 
 void attReset(void) {
@@ -148,8 +141,18 @@ unsigned char attIsRunning(void) {
 }
 
 void attSetRunning(unsigned char flag) {
-    is_running = flag;
+    if(flag == 0) { attStop(); }
+    else if(flag == 1) { attStart(); }
 }
+
+void attStart(void) {
+    is_running = 1;
+}
+
+void attStop(void) {
+    is_running = 0;
+}
+
 
 // TODO: Fix!
 void attZero(void) {
@@ -181,7 +184,7 @@ void attZero(void) {
 void attEstimatePose(void) {
 
     Quaternion displacement_quat;
-    float rate[3], norm, sina_2;
+    float rate[3], norm, sina_2, square_sum;
     bams32_t a_2;
 
     if(!is_ready) { return; }
@@ -194,10 +197,10 @@ void attEstimatePose(void) {
     //timestamp = swatchToc(); // Record timestamp
 
     // Calculate magnitude and disiplacement
-    norm = sqrtf(rate[0]*rate[0] + rate[1]*rate[1] + rate[2]*rate[2]);
+    square_sum = rate[0]*rate[0] + rate[1]*rate[1] + rate[2]*rate[2];
 
-    // Special case when no movements
-    if(norm == 0.0) {
+    // Special case when no movement
+    if(square_sum == 0.0) {
 
         displacement_quat.w = 1.0;
         displacement_quat.x = 0.0;
@@ -206,6 +209,7 @@ void attEstimatePose(void) {
 
     } else {
 
+        norm = sqrtf(square_sum);
         // Generate displacement rotation quaternion
         // Normally this is w = cos(a/2), but we can delay normalizing
         // by multiplying all terms by norm
@@ -221,11 +225,10 @@ void attEstimatePose(void) {
     }
 
     // Apply displacement to pose
-    quatMult(&pose_quat, &displacement_quat, &pose_quat);
+    quatMult(&displacement_quat, &pose_quat, &pose_quat);
 
     // Normalize pose quaternion to account for unnormalized displacement quaternion
-    quatNormalize(&pose_quat);
-    //calculateEulerAngles();
+    quatNormalize(&pose_quat);    
 
 }
 
