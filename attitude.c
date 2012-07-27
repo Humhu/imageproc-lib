@@ -154,22 +154,31 @@ void attStop(void) {
 
 
 // TODO: Fix!
+// g_world = q_pose*g_meas*q_pose'
+// g_world*q_pose = q_pose*g_meas
 void attZero(void) {
 
-    float gxy, sina_2, xl[3], temp;
-    bams16_t a_2;
+    float sina_2, xl[3], temp, a_2, gxy;
+    float dot_product, g_magnitude, scale;
+    bams16_t angle;
 
     xlGetFloatXYZ(xl);
-
-    // Convert frames so that z axis is oriented upwards, x is forward, y is side
-    xl[2] = -xl[2];
+    xl[2] = -xl[2];     // Convert frame
     temp = xl[0];
     xl[0] = -xl[1];
     xl[1] = temp;
 
-    gxy = sqrtf(xl[0]*xl[0] + xl[1]*xl[1]);
-    a_2 = (BAMS16_PI_2 + bams16Atan2(xl[2], gxy))/2;
-    sina_2 = bams16SinFine(a_2);
+    g_magnitude = sqrtf(xl[0]*xl[0] + xl[1]*xl[1] + xl[2]*xl[2]);
+    scale = 1.0/g_magnitude; // Normalize the vector
+    xl[0] = xl[0]*scale;
+    xl[1] = xl[1]*scale;
+    xl[2] = xl[2]*scale;
+    
+    dot_product = -xl[2]; // Let g = [0,0,-1];
+    angle = bams16Acos(dot_product); // Magnitudes are both 1
+    
+    // gxy = sqrtf(xl[0]*xl[0] + xl[1]*xl[1]);    
+    // sina_2 = bams16SinFine(a_2);
 
     pose_quat.w = bams16CosFine(a_2)*gxy;
     pose_quat.x = sina_2*(-xl[1]);
